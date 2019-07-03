@@ -40,7 +40,7 @@
       foundCountries.forEach(async i => {
         try {
           // alert(foundCountries.length) 
-          let newDataJson = await fetch(`http://api.worldbank.org/v2/country/${i["alpha-2"]}?format=json`, {signal: controller.signal});
+          let newDataJson = await fetch(`https://api.worldbank.org/v2/country/${i["alpha-2"]}?format=json`, {signal: controller.signal});
           let newData = await newDataJson.json();
           if (c == 1) parResults.innerHTML = "";
           parResults.innerHTML += `${c++}. [${i["alpha-2"]}] ${i["name"]}, capital: ${newData[1][0]["capitalCity"]} </br>`;
