@@ -3,15 +3,23 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="country-info/assets/css/reset.css" type="text/css">
     <link rel="stylesheet" href="country-info/assets/css/main.css" type="text/css">
+    <link rel="stylesheet" href="country-info/assets/css/media-queries.css" type="text/css">
 </head>
 <body>
-    <div class="abort" hidden></div>
-    <label>
-      <input type="search" name="searchCountry" id="" autocomplete="false">
-    </label>
-    <p class="mini-results"></p>
-    <p class="full-results"></p>
+    <div class="container">
+      <section class="search-component">
+        <h1>Country info</h1>
+        <label>
+          <input type="search" name="searchCountry" id="" autocomplete="false">
+        </label>
+        <p class="mini-results"></p>
+        <p class="full-results"></p>
+      </section>
+
+    </div>
+    
 </body>
 <script>
   let countryAPI = `http://api.worldbank.org/v2/country/br?format=json`
@@ -21,11 +29,11 @@
   let val;
   let controller = new AbortController();
   // var signal = controller.signal;
-  let abortBtn = document.querySelector(".abort");
-  abortBtn.addEventListener("click", (e) => {
-    controller.abort();
-    console.log('Download aborted');
-  });
+  // let abortBtn = document.querySelector(".abort");
+  // abortBtn.addEventListener("click", (e) => {
+  //   controller.abort();
+  //   console.log('Download aborted');
+  // });
 
   search.addEventListener("input", async (e) => {
     // val = getCountry().then(resolve => alert(resolve[0].name));
