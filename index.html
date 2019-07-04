@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/country-info/assets/css/reset.css" type="text/css">
     <link rel="stylesheet" href="/country-info/assets/css/main.css" type="text/css">
     <link rel="stylesheet" href="/country-info/assets/css/media-queries.css" type="text/css">
 </head>
 <body>
-    <div class="container">
-      <section class="search-component">
-        <h1>Country info</h1>
-        <label>
-          <input type="search" name="searchCountry" id="" autocomplete="false">
-        </label>
-        <p class="mini-results"></p>
-        <p class="full-results"></p>
-      </section>
+  <div class="container">
+    <section class="search-component">
+      <h1>Country info</h1>
+      <label>
+        <input type="search" name="searchCountry" placeholder="type country name" id="" autocomplete="off">
+        <input type="button" value="show">
+      </label>
+    </section>
+    <section class="results-component"></section>
 
-    </div>
-    
+  </div>
+
 </body>
 <script>
   let countryAPI = `http://api.worldbank.org/v2/country/br?format=json`
@@ -28,70 +28,100 @@
   let search = document.querySelector("input[name='searchCountry']");
   let val;
   let controller = new AbortController();
-  // var signal = controller.signal;
-  // let abortBtn = document.querySelector(".abort");
-  // abortBtn.addEventListener("click", (e) => {
-  //   controller.abort();
-  //   console.log('Download aborted');
-  // });
 
-  search.addEventListener("input", async (e) => {
-    // val = getCountry().then(resolve => alert(resolve[0].name));
-    // abortBtn.dispatchEvent(new Event("click"));
+  search.addEventListener("input", async function (e) {
     controller.abort();
     controller = new AbortController();
-    
 
-      let foundCountries = await getCountry();
-      let c = 1;
+    if (search.value == "") {
+      let divFound = document.querySelector(".search-component > label > div");
+      divFound.remove();
+      search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
+      return;
+    }
 
-      foundCountries.forEach(async i => {
-        try {
-          // alert(foundCountries.length) 
-          let newDataJson = await fetch(`https://api.worldbank.org/v2/country/${i["alpha-2"]}?format=json`, {signal: controller.signal});
-          let newData = await newDataJson.json();
-          if (c == 1) parResults.innerHTML = "";
-          parResults.innerHTML += `${c++}. [${i["alpha-2"]}] ${i["name"]}, capital: ${newData[1][0]["capitalCity"]} </br>`;
-        } catch(err) {
-          if (err instanceof TypeError) {
-            console.log(`${c-1}. [${i["alpha-2"]}] ${i["name"]}`);
-            c--;
-          } else if (err instanceof DOMException) {
-            console.log("ABORT", err);
+    let divFound = document.querySelector(".search-component > label > div");
+    if (divFound) divFound.remove();
+    let number = 0;
+    let div = document.createElement('div');
+    let ul = document.createElement('ul');
+    let li = document.createElement('li');
+    div.style.position = "absolute";
+    div.style.top = "40px";
+    div.style.width = "90%";
+    div.style.backgroundColor = "white";
+    div.style.display = "block";
+    div.style.minHeight = "150px";
+    div.appendChild(ul);
+
+    let foundCountries = await getCountry(div);
+
+    if (foundCountries.length == 0) {
+      let divFound = document.querySelector(".search-component > label > div");
+      if (!divFound) search.parentElement.appendChild(div);
+      let p2 = document.querySelector(".search-component > label > div > p");
+      if (p2) p2.remove();
+      let p = document.createElement('p');
+      p.innerHTML = "nothing found";
+      div.appendChild(p);
+      console.log("----NOT FOUND------TCL: div", div.innerHTML)
+    } else {
+      search.parentElement.appendChild(div);
+      console.log("******SEARCHING*********TCL: div", div.innerHTML)
+      search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "0";
+    }
+
+    let doSmthAllJson = await Promise.all(foundCountries.map(i => fetch(`https://api.worldbank.org/v2/country/${i["alpha-2"]}?format=json`, { signal: controller.signal })));
+    let doSmthAll = await Promise.all(doSmthAllJson.map(i => i.json()));
+
+    console.log(doSmthAll);
+
+    for (let i = 0; i < foundCountries.length; i++) {
+      try {
+        // alert(foundCountries.length) 
+
+        if (number < 10) {
+          number++;
+          console.log("TCL: number", number)
+          if (number == 1) {
+            ul.innerHTML = "";
           }
+          let li = document.createElement('li');
+          li.innerHTML = `${number}. [${foundCountries[i]["alpha-2"]}] ${foundCountries[i]["name"]}, capital: ${doSmthAll[i][1][0]["capitalCity"]}`;
+          console.log("TCL: li", li.textContent)
+          ul.appendChild(li);
+          let p = document.querySelector("p");
+          if (p) p.remove();
+          console.log("TCL: ul", ul.innerHTML)
+          console.log("******CURRENT******TCL: div", div.innerHTML)
+        } else if (number == 10) {
+          number++;
+          let p = document.createElement('p');
+          p.innerHTML = "...";
+          div.appendChild(p);
         }
-          // parResults.innerHTML += `<strong style="background-color:yellow"> ${c-1}. [${i["alpha-2"]}] ${i["name"]}, capital: uknown </br> </strong>`;
-      }); 
-      if (foundCountries.length == 0) parResults.innerHTML = "nothing found";
 
-      // let stopThings = await makeThings;
-      // alert(stopThings);
-      
-      
-      // getCountry().then(resolve => {
-      //     parResults.innerHTML = "";
-      //     let c = 1;
-      //     resolve.forEach(i => fetch(`http://api.worldbank.org/v2/country/${i["alpha-2"]}?format=json`, {signal: controller.signal})
-      //     .then(resolve => resolve.json())
-      //     .then(json => {
-            
-      //       parResults.innerHTML += `${c++}. [${i["alpha-2"]}] ${i["name"]}, capital: ${json[1][0]["capitalCity"]} </br>`;
-      //     }));
-      // })
-    // alert(val[232]["name"])
-    // alert(val);
-    // par.innerHTML = val.join(" ");
-    // search.innerHTML
+      } catch (err) {
+        if (err instanceof TypeError) {
+          console.error(`TYPE_ERROR ${number}. [${foundCountries[i]["alpha-2"]}] ${foundCountries[i]["name"]}`);
+          number--;
+        } else if (err instanceof DOMException) {
+          console.error("ABORT ERROR", err);
+        }
+      }
+
+    }
+
   });
-  // getCountry()
-  //   .then(resolve => alert(resolve[248]["name"]));
-  async function getCountry(){
+
+  async function getCountry(elt1) {
     const countriesJson = await fetch("country.json");
     const countries = await countriesJson.json();
 
-    const foundCountries = await countries.filter(i => i.name.toLowerCase().includes(search.value.toLowerCase())); //await ???
-    parResults.innerHTML = "Searching, wait a bit";
-    // const found
+    const foundCountries = countries.filter(i => i.name.toLowerCase().includes(search.value.toLowerCase())); //await ???
+    let p = document.createElement('p');
+    p.innerHTML = "Searching, wait a bit"
+    elt1.appendChild(p);
 
     return foundCountries;
   }
