@@ -22,14 +22,15 @@
 
 </body>
 <script>
-  let countryAPI = `http://api.worldbank.org/v2/country/br?format=json`
+  let countryAPI = `http://api.worldbank.org/v2/country/br?format=json`;
   let par = document.querySelector("p.mini-results");
   let parResults = document.querySelector("p.full-results");
   let search = document.querySelector("input[name='searchCountry']");
   let val;
   let controller = new AbortController();
 
-  search.addEventListener("input", async function (e) {
+  search.addEventListener("input", async e => {
+    console.clear();
     controller.abort();
     controller = new AbortController();
 
@@ -51,7 +52,7 @@
     div.style.width = "90%";
     div.style.backgroundColor = "white";
     div.style.display = "block";
-    div.style.minHeight = "150px";
+    // div.style.minHeight = "150px";
     div.appendChild(ul);
 
     let foundCountries = await getCountry(div);
@@ -71,47 +72,101 @@
       search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "0";
     }
 
-    let doSmthAllJson = await Promise.all(foundCountries.map(i => fetch(`https://api.worldbank.org/v2/country/${i["alpha-2"]}?format=json`, { signal: controller.signal })));
-    let doSmthAll = await Promise.all(doSmthAllJson.map(i => i.json()));
+    try {
+      let doSmthAllJson = await Promise.all(foundCountries.map(i => fetch(`https://api.worldbank.org/v2/country/${i["alpha-2"]}?format=json`, { signal: controller.signal })));
+      let doSmthAll = await Promise.all(doSmthAllJson.map(i => i.json()));
+      let errArr = [];
+      console.log(`DO SOMTH ${foundCountries.length}`, doSmthAll);
 
-    console.log(doSmthAll);
 
-    for (let i = 0; i < foundCountries.length; i++) {
-      try {
-        // alert(foundCountries.length) 
+      for (let i = 0; i < foundCountries.length; i++) {
+        try {
+          // alert(foundCountries.length) 
 
-        if (number < 10) {
-          number++;
-          console.log("TCL: number", number)
-          if (number == 1) {
-            ul.innerHTML = "";
+          if (number < 10) {
+            number++;
+            // console.log("TCL: number", number)
+            if (number == 1) {
+              ul.innerHTML = "";
+            }
+            let li = document.createElement('li');
+            li.innerHTML = `${number}. [${foundCountries[i]["alpha-2"]}] ${foundCountries[i]["name"]}, capital: ${doSmthAll[i][1][0]["capitalCity"]}`;
+            // console.log("TCL: li", li.textContent)
+            ul.appendChild(li);
+            let p = document.querySelector(".search-component > label > div > p");
+            if (p) p.remove();
+            // console.log("TCL: ul", ul.innerHTML)
+            console.log("******CURRENT******TCL: div", div.innerHTML)
+          } else if (number == 10) {
+            number++;
+            let p = document.createElement('p');
+            p.innerHTML = "...";
+            div.appendChild(p);
           }
-          let li = document.createElement('li');
-          li.innerHTML = `${number}. [${foundCountries[i]["alpha-2"]}] ${foundCountries[i]["name"]}, capital: ${doSmthAll[i][1][0]["capitalCity"]}`;
-          console.log("TCL: li", li.textContent)
-          ul.appendChild(li);
-          let p = document.querySelector("p");
-          if (p) p.remove();
-          console.log("TCL: ul", ul.innerHTML)
-          console.log("******CURRENT******TCL: div", div.innerHTML)
-        } else if (number == 10) {
-          number++;
-          let p = document.createElement('p');
-          p.innerHTML = "...";
-          div.appendChild(p);
-        }
 
-      } catch (err) {
-        if (err instanceof TypeError) {
-          console.error(`TYPE_ERROR ${number}. [${foundCountries[i]["alpha-2"]}] ${foundCountries[i]["name"]}`);
-          number--;
-        } else if (err instanceof DOMException) {
-          console.error("ABORT ERROR", err);
+        } catch (err) {
+          if (err instanceof TypeError) {
+            console.error(`TYPE_ERROR_MY ${number}. [${foundCountries[i]["alpha-2"]}] ${foundCountries[i]["name"]}\n`, err);
+            errArr.push(i);
+            number--;
+          } else {
+            console.error("UKNOWN_ERROR_MY\n", err);
+          }
         }
       }
 
-    }
 
+
+      let searchAllBtn = document.querySelector(".search-component > label > input[type='button']");
+      let resultsComp = document.querySelector(".results-component");
+      let num = 0;
+      // let indexArr = 0;
+      // let num = 1;
+      function miniResults() {
+        resultsComp.innerHTML = "";
+        for (let i = 0; i < foundCountries.length; i++) {
+          // if (i == errArr[indexArr]) {
+          //   indexArr++;
+          //   continue;
+          // }
+          try {
+            num++
+            let div = document.createElement("div");
+            let p = document.createElement("p");
+            let img = document.createElement("img");
+            img.src= `https://www.countryflags.io/${foundCountries[i]["alpha-2"]}/flat/64.png`;
+            p.innerHTML = `#${num} <br> [${foundCountries[i]["alpha-2"]}] ${foundCountries[i]["name"]}<br> capital: ${doSmthAll[i][1][0]["capitalCity"]}`;
+            div.className = "mini-result";
+            div.appendChild(p);
+            div.appendChild(img);
+            resultsComp.appendChild(div);
+            // num++;
+          } catch (err) {
+            if (err instanceof TypeError) {
+              console.error(`TYPE_ERROR_IN_FUNC_MY ${num}. [${foundCountries[i]["alpha-2"]}] ${foundCountries[i]["name"]}\n`, err);
+              num--;
+            } else {
+              console.error("UKNOWN_ERROR_MY\n", err);
+            }
+          }
+        }
+        let p = document.createElement("p");
+        p.innerHTML = `<strong>Found ${num} countries:</strong>`
+        resultsComp.insertBefore(p, resultsComp.firstElementChild);
+      }
+      searchAllBtn.addEventListener("click", miniResults);
+
+
+
+
+    } catch (err) {
+      if (err instanceof DOMException) {
+        console.error("ABORT_ERROR_MY\n", err);
+      } else {
+        console.error("UKNOWN_ERROR_MY_OUTER\n", err);
+      }
+
+    }
   });
 
   async function getCountry(elt1) {
@@ -125,5 +180,9 @@
 
     return foundCountries;
   }
+
+
+
+
 </script>
 </html>
