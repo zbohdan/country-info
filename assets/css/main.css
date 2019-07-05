@@ -73,6 +73,7 @@ h1 {
   padding: 20px;
 }
 .results-component {
+  /* display: flex; */
   min-height: 300px;
   width: 90%;
   margin: 10px auto 10px auto;
@@ -88,6 +89,12 @@ h1 {
 }
 .results-component > p > strong {
   font-weight: bold;
+}
+.mini-results {
+  width: 95%;
+  margin: 10px auto 10px auto;
+  border: 1px solid green;
+  background-color: #ccc;
 }
 .mini-result {
   display: flex;
@@ -108,7 +115,27 @@ h1 {
 .mini-result-single {
   width: 90%;
   margin: 10px auto 10px auto;
-  background-color: #ccc;
+  /* background-color: white; */
+}
+.mini-result-single > h1 {
+  font-size: 50px;
+  text-align: center;
+  color: #ff9898a9;
+}
+.pagination {
+  /* margin: initial auto initial auto; */
+  width: 95%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.pagination > button {
+  border: none;
+  outline: none;
+  margin-right: 3px;
+  margin-top: 3px;
+  background-color: #fff;
+  cursor: pointer;
 }
 /* .mini-result > p {
 } */
