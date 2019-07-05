@@ -28,7 +28,7 @@
   background-color: rgb(151, 224, 253);
   cursor: pointer;
 }
-input[type="search"] {
+input[name="searchCountry"] {
   /* display: inline; */
   height: 40px;
   width: 90%;
@@ -43,7 +43,7 @@ input[type="search"] {
   -ms-user-select: none;
   user-select: none; */
 }
-input[type="button"] {
+input[name="showBtn"] {
   margin-top: 15px;
   cursor: pointer;
 }
