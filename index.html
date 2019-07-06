@@ -185,7 +185,7 @@
         let capital = await doSmthAll[i][1][0]["capitalCity"];
         let isoName = ownSearch[i]["alpha-2"];
         let counName = ownSearch[i]["name"];
-        let imgSrc = `https://www.countryflags.io/${isoName}/flat/64.png`;
+        let imgSrc = `https://www.countryflags.io/${isoName}/shiny/64.png`;
 
         successResArr.push({
           "counName": counName,
@@ -312,9 +312,9 @@
         pFound.innerHTML = "";
       }
 
-      let p = document.createElement("p");
-      p.innerHTML = `<strong>Found ${successResArr.length} countries:</strong>`;
-      resultsComp.insertBefore(p, resultsComp.firstElementChild);
+      let h3 = document.createElement("h3");
+      h3.innerHTML = `<strong>Found ${successResArr.length} countries:</strong>`;
+      resultsComp.insertBefore(h3, resultsComp.firstElementChild);
     }
 
     // --------------------------------------------
@@ -338,7 +338,7 @@
       let divInfo = document.createElement("div");
       
       h1.innerHTML = `${ownSearch["name"]}`;
-      img.src = `https://www.countryflags.io/${ownSearch["alpha-2"]}/flat/64.png`;
+      img.src = `https://www.countryflags.io/${ownSearch["alpha-2"]}/shiny/64.png`;
       p.innerHTML = `INFO <br> [${ownSearch["alpha-2"]}] <br> Capital city: ${singleCap[1][0]["capitalCity"]}`;
       iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyB-AB34OTQFNDISPRKrYRGmU7SQ5utBEaw&q=${singleCap[1][0]["capitalCity"]} ${singleCap[1][0]["name"]}`;
       iframe.setAttribute("allow", "fullscreen");
