@@ -129,6 +129,8 @@ input[name="showBtn"]:hover {
   margin-left: auto;
 }
 .mini-result-single {
+  display: flex;
+  flex-direction: column;
   width: 90%;
   margin: 10px auto 10px auto;
   /* background-color: white; */
@@ -137,6 +139,19 @@ input[name="showBtn"]:hover {
   font-size: 50px;
   text-align: center;
   color: #fc1d1da8;
+}
+.mini-result-single > div {
+  display: flex;
+  /* align-self: center;
+  width: 80%; */
+}
+.mini-result-single > div > img {
+  margin-left: auto;
+}
+.mini-result-single > iframe {
+  height: 400px;
+  width: 70%;
+  align-self: center;
 }
 .pagination {
   /* margin: initial auto initial auto; */

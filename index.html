@@ -334,14 +334,22 @@
       let h1 = document.createElement("h1");
       let p = document.createElement("p");
       let img = document.createElement("img");
-
+      let iframe = document.createElement("iframe");
+      let divInfo = document.createElement("div");
+      
       h1.innerHTML = `${ownSearch["name"]}`;
       img.src = `https://www.countryflags.io/${ownSearch["alpha-2"]}/flat/64.png`;
-      p.innerHTML = `INFO <br> [${ownSearch["alpha-2"]}] <br> capital: ${singleCap[1][0]["capitalCity"]}`;
+      p.innerHTML = `INFO <br> [${ownSearch["alpha-2"]}] <br> Capital city: ${singleCap[1][0]["capitalCity"]}`;
+      iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyB-AB34OTQFNDISPRKrYRGmU7SQ5utBEaw&q=${singleCap[1][0]["capitalCity"]} ${singleCap[1][0]["name"]}`;
+      iframe.setAttribute("allow", "fullscreen");
       div.className = "mini-result-single";
+      divInfo.appendChild(p);
+      divInfo.appendChild(img);
       div.appendChild(h1);
-      div.appendChild(p);
-      div.appendChild(img);
+      // div.appendChild(p);
+      // div.appendChild(img);
+      div.appendChild(divInfo);
+      div.appendChild(iframe);
       resultsComp.innerHTML = "";
       resultsComp.appendChild(div);
       // return `HELLO ${countryName}`;
