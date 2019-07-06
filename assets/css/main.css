@@ -24,9 +24,16 @@
 .search-component > label p {
   padding-left: 20px;
 }
+
+.search-component > label li:focus,
 .search-component > label li:hover {
   background-color: rgb(151, 224, 253);
   cursor: pointer;
+}
+h1 {
+  font-size: 48px;
+  color: #d869c89e;
+  padding: 20px;
 }
 input[name="searchCountry"] {
   /* display: inline; */
@@ -45,7 +52,20 @@ input[name="searchCountry"] {
 }
 input[name="showBtn"] {
   margin-top: 15px;
+  height: 20px;
+  border-radius: 10px;
+  color: white;
+  background-color: #d869c89e;
+
+  border: none;
   cursor: pointer;
+}
+input[name="showBtn"]:focus,
+input[name="showBtn"]:hover {
+  /* background-color: yellow;
+  color: black; */
+  /* color: #d869c8; */
+  background-color: #fd01019e;
 }
 ::-webkit-input-placeholder {
   /* Chrome/Opera/Safari */
@@ -67,11 +87,7 @@ input[name="showBtn"] {
   color: blue;
   opacity: 0.5;
 }
-h1 {
-  font-size: 48px;
-  color: #d869c89e;
-  padding: 20px;
-}
+
 .results-component {
   /* display: flex; */
   min-height: 300px;
@@ -120,7 +136,7 @@ h1 {
 .mini-result-single > h1 {
   font-size: 50px;
   text-align: center;
-  color: #ff9898a9;
+  color: #fc1d1da8;
 }
 .pagination {
   /* margin: initial auto initial auto; */
@@ -131,11 +147,14 @@ h1 {
 }
 .pagination > button {
   border: none;
-  outline: none;
+  border-radius: 7px;
   margin-right: 3px;
   margin-top: 3px;
   background-color: #fff;
   cursor: pointer;
 }
-/* .mini-result > p {
-} */
+.pagination > button:focus,
+.pagination > button:hover {
+  background-color: #d869c89e;
+  color: white;
+}
