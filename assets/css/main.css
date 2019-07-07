@@ -34,6 +34,7 @@ h1 {
   font-size: 48px;
   color: #d869c89e;
   padding: 20px;
+  text-shadow: 1px 1px 0.29px black;
 }
 input[name="searchCountry"] {
   /* display: inline; */
@@ -57,6 +58,7 @@ input[name="showBtn"] {
   color: white;
   background-color: #d869c89e;
   box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: 0.4px 0.4px 0.2px black;
   border: none;
   cursor: pointer;
 }
@@ -99,6 +101,7 @@ input[name="showBtn"]:hover {
   background: linear-gradient(to right, rgb(219, 219, 255), rgb(193, 193, 255));
 }
 .results-component > p {
+  text-shadow: 0.4px 0.4px 0.2px black;
   color: #ff15c49a;
   margin-left: 20px;
   margin-top: 10px;
@@ -111,6 +114,7 @@ input[name="showBtn"]:hover {
   font-size: 20px;
 }
 .results-component > h3 > strong {
+  text-shadow: 0.4px 0.4px 0.2px black;
   font-weight: bold;
 }
 .mini-results {
@@ -138,6 +142,7 @@ input[name="showBtn"]:hover {
 }
 .mini-result > p {
   margin-left: 10px;
+  color: #164861;
 }
 .mini-result > img {
   margin-left: auto;
@@ -159,6 +164,10 @@ input[name="showBtn"]:hover {
   display: flex;
   /* align-self: center;
   width: 80%; */
+}
+.mini-result-single > div > p {
+  text-shadow: 0.2px 0.2px 0.1px black;
+  color: #c800b094;
 }
 .mini-result-single > div > img {
   margin-left: auto;
@@ -183,6 +192,10 @@ input[name="showBtn"]:hover {
   margin-top: 3px;
   background-color: #fff;
   cursor: pointer;
+}
+.pagination > button.current {
+  background-color: #d869c89e;
+  color: white;
 }
 .pagination > button:focus,
 .pagination > button:hover {

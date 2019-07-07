@@ -35,7 +35,7 @@
   search.focus();
   search.addEventListener("keydown", e => {
     if (e.key == "Enter") {
-      inputBtn.dispatchEvent(new Event("click"));
+      inputBtn.click();;
     }
   })
 
@@ -48,11 +48,9 @@
     controller.abort();
     controller = new AbortController();
 
-
-
     if (search.value == "") {
       let divFound = document.querySelector(".search-component > label > div");
-      divFound.remove();
+      if (divFound) divFound.remove();
       search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
       return;
     }
@@ -62,22 +60,23 @@
     let number = 0;
     let div = document.createElement('div');
     let ul = document.createElement('ul');
-    // div.style.position = "absolute";
-    // div.style.top = "40px";
     div.style.width = "90%";
     div.style.backgroundColor = "white";
     div.style.display = "block";
-    // div.style.minHeight = "150px";
     div.appendChild(ul);
-
-    let foundCountries = await getCountry(div);
+    let p = document.createElement('p');
+    p.innerHTML = "Searching...";
+    div.appendChild(p);
+    search.parentElement.insertBefore(div, inputBtn);
     search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "0";
+
+    let resObj = await getCountry();
 
     // --------------------------------------------
     //    PRELIMINARY CHECK OF COUNTRY EXISTENCE
     // --------------------------------------------
 
-    if (foundCountries.length == 0) {
+    if (resObj['successArr'].length == 0) {
       let divFound = document.querySelector(".search-component > label > div");
       if (!divFound) search.parentElement.insertBefore(div, inputBtn);
 
@@ -89,70 +88,57 @@
         p.innerHTML = "nothing found";
         div.appendChild(p);
       }
-    } else {
-      search.parentElement.insertBefore(div, inputBtn);
-    }
+    } 
 
     // --------------------------------------------
     //           CREATING OFFER LIST
     // --------------------------------------------
 
-    try {
-      let doSmthAllJson = await Promise.all(foundCountries.map(i => fetch(`https://api.worldbank.org/v2/country/${i["alpha-2"]}?format=json`, { signal: controller.signal })));
-      let doSmthAll = await Promise.all(doSmthAllJson.map(i => i.json()));
+    for (let i = 0; i < resObj['successArr'].length; i++) {
+      try {
+        if (number < 10) {
+          number++;
+          if (number == 1) {
+            ul.innerHTML = "";
+          }
 
-      for (let i = 0; i < foundCountries.length; i++) {
-        try {
-          if (number < 10) {
-            number++;
-            if (number == 1) {
-              ul.innerHTML = "";
+          let li = document.createElement('li');
+          li.innerHTML = `${number}. [${resObj['successArr'][i]["iso2Name"]}] ${resObj['successArr'][i]["countryName"]}, capital: ${resObj['successArr'][i]["capital"]}`;
+          li.tabIndex = 0;
+
+          li.addEventListener("keydown", e => {
+            if (e.key == "Enter") {
+              li.click();;
             }
+          });
 
-            let li = document.createElement('li');
-            li.innerHTML = `${number}. [${foundCountries[i]["alpha-2"]}] ${foundCountries[i]["name"]}, capital: ${doSmthAll[i][1][0]["capitalCity"]}`;
-            li.tabIndex = 0;
+          li.addEventListener("click", e => {
+            search.value = `${resObj['successArr'][i]["countryName"]}`;
+            search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
+            let divFound = document.querySelector(".search-component > label > div");
+            divFound.remove();
+            inputBtn.dispatchEvent(new Event('click'));
+          });
+          ul.appendChild(li);
+          let pFound = document.querySelector(".search-component > label > div > p");
+          if (pFound) pFound.remove();
+        } else if (number == 10) {
+          number++;
+          let p = document.createElement('p');
+          p.innerHTML = "...";
+          div.appendChild(p);
+        }
 
-            li.addEventListener("keydown", e => {
-              if (e.key == "Enter") {
-                li.dispatchEvent(new Event("click"));
-              }
-            });
-
-            li.addEventListener("click", e => {
-              search.value = `${foundCountries[i]["name"]}`;
-              search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
-              let divFound = document.querySelector(".search-component > label > div");
-              divFound.remove();
-              inputBtn.dispatchEvent(new Event('click'));
-            });
-            ul.appendChild(li);
-            let pFound = document.querySelector(".search-component > label > div > p");
-            if (pFound) pFound.remove();
-          } else if (number == 10) {
-            number++;
-            let p = document.createElement('p');
-            p.innerHTML = "...";
-            div.appendChild(p);
-          }
-
-        } catch (err) {
-          if (err instanceof TypeError) {
-            console.error(`TYPE_ERROR_MY ${number}. [${foundCountries[i]["alpha-2"]}] ${foundCountries[i]["name"]}\n`, err);
-            number--;
-          } else {
-            console.error("UKNOWN_ERROR_MY\n", err);
-          }
+      } catch (err) {
+        if (err instanceof TypeError) {
+          console.error(`TYPE_ERROR_MY ${number}. [${resObj['successArr'][i]["iso2Name"]}] ${resObj['successArr'][i]["iso2Name"]}\n`, err);
+          number--;
+        } else {
+          console.error("UKNOWN_ERROR_MY\n", err);
         }
       }
-    } catch (err) {
-      if (err instanceof DOMException) {
-        console.error("ABORT_ERROR_MY\n", err);
-      } else {
-        console.error("UKNOWN_ERROR_MY_OUTER\n", err);
-      }
-
     }
+
   });
 
   // --------------------------------------------
@@ -160,62 +146,35 @@
   // --------------------------------------------
 
   async function miniResults(e) {
-    let successResArr = [];
-    let failArr = [];
+    // let resObj['successArr'] = [];
+    // let failArr = [];
     let divMiniResults = document.createElement('div');
     let divFound = document.querySelector(".search-component > label > div");
 
     let resultsComp = document.querySelector(".results-component");
     resultsComp.innerHTML = "";
+    let p = document.createElement('p');
+    p.innerHTML = "Searching...";
+    resultsComp.appendChild(p)
 
-    let foundCountries = await getCountry(resultsComp);
-
-    let doSmthAllJson = await Promise.all(foundCountries.map(i => fetch(`https://api.worldbank.org/v2/country/${i["alpha-2"]}?format=json`, { signal: controller.signal })));
-    let doSmthAll = await Promise.all(doSmthAllJson.map(i => i.json()));
-
-    let ownSearch = foundCountries.filter(i => i.name.toLowerCase().includes(search.value.toLowerCase())); //await ???
-    console.log(`Меня кинуло сюда: ${ownSearch.length} -`, ownSearch);
-
-    // --------------------------------------------
-    //   CREATING SUCCESSED AND FAILED ARRAYS
-    // --------------------------------------------
-
-    for (let i = 0; i < ownSearch.length; i++) {
-      try {
-        let capital = await doSmthAll[i][1][0]["capitalCity"];
-        let isoName = ownSearch[i]["alpha-2"];
-        let counName = ownSearch[i]["name"];
-        let imgSrc = `https://www.countryflags.io/${isoName}/shiny/64.png`;
-
-        successResArr.push({
-          "counName": counName,
-          'capital': capital,
-          'isoName': isoName,
-          'imgSrc': imgSrc,
-        });
-
-      } catch (err) {
-        console.error(`TYPE_ERROR_IN_FUNC_MY ${i}. KRASAVA`, err);
-        failArr.push(i)
-      }
-    }
+    let resObj = await getCountry();
 
     // --------------------------------------------
     //  CREATING RESULT(S) AT NEW BLOCK
     // --------------------------------------------
 
     // single result
-    if (successResArr.length == 1) {
-      for (i = 0; i < ownSearch.length; i++) {
-        if (failArr.indexOf(i) + 1) continue;
+    if (resObj['successArr'].length == 1) {
+      for (i = 0; i < resObj['successArr'].length; i++) {
+        // if (resObj['failArr'].indexOf(i) + 1) continue;
         if (divFound) divFound.remove();
         search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
-        showInfo(ownSearch[i]["name"]);
+        showSingleInfo(resObj['successArr'][i]["countryName"]);
       }
     } else {
       //many results
       let num = 0
-      for (let i = 0; i < Math.min(5, successResArr.length); i++) {
+      for (let i = 0; i < Math.min(5, resObj['successArr'].length); i++) {
         try {
           num++;
           let div = document.createElement("div");
@@ -226,24 +185,25 @@
           divMiniResults.appendChild(div);
           resultsComp.appendChild(divMiniResults);
 
-          img.src = successResArr[i]['imgSrc'];
-          p.innerHTML = `#${i + 1} <br> [${successResArr[i]['isoName']}] ${successResArr[i]['counName']}<br> capital: ${successResArr[i]["capital"]}`;
+          img.src = resObj['successArr'][i]['flagSrc'];
+          // img.onload = () => div.appendChild(img);
+          p.innerHTML = `#${i + 1} <br> [${resObj['successArr'][i]['iso2Name']}] ${resObj['successArr'][i]['countryName']}<br> capital: ${resObj['successArr'][i]["capital"]}`;
           div.className = "mini-result";
           divMiniResults.className = 'mini-results';
           div.tabIndex = 0;
 
           div.addEventListener("keydown", e => {
             if (e.key == "Enter") {
-              div.dispatchEvent(new Event("click"));
+              div.click();;
             }
           });
 
           div.addEventListener("click", async e => {
             console.log(`click, i = ${i}`);
-            search.value = successResArr[i]['counName'];
+            search.value = resObj['successArr'][i]['countryName'];
             search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
             if (divFound) divFound.remove();
-            showInfo(search.value);
+            showSingleInfo(search.value);
           });
         } catch (err) {
           if (err instanceof TypeError) {
@@ -258,9 +218,10 @@
       // pagination
       let pagContainer = document.createElement("div");
       pagContainer.className = "pagination";
+      let currentPage = 0;
 
-      for (let i = 0; i < Math.ceil(successResArr.length / 5); i++) {
-        if (successResArr.length <= 5) break;
+      for (let i = 0; i < Math.ceil(resObj['successArr'].length / 5); i++) {
+        if (resObj['successArr'].length <= 5) break;
 
         let paginNumber = document.createElement('button');
         paginNumber.innerHTML = `${i + 1}`;
@@ -270,8 +231,11 @@
         paginNumber.addEventListener("click", e => {
           let divMiniResults = document.querySelector('.mini-results');
           divMiniResults.innerHTML = "";
+          if (i != currentPage) document.querySelectorAll(".pagination > button")[currentPage].classList.toggle("current");
+          currentPage = i;
+          if (!paginNumber.classList.contains("current")) paginNumber.classList.add("current");
 
-          for (let j = i * 5; j < Math.min(i * 5 + 5, successResArr.length); j++) {
+          for (let j = i * 5; j < Math.min(i * 5 + 5, resObj['successArr'].length); j++) {
             let div = document.createElement("div");
             let p = document.createElement("p");
             let img = document.createElement("img");
@@ -279,56 +243,61 @@
             div.appendChild(img);
             divMiniResults.appendChild(div)
 
-            img.src = successResArr[j]['imgSrc'];
-            p.innerHTML = `#${j + 1} <br> [${successResArr[j]['isoName']}] ${successResArr[j]['counName']}<br> capital: ${successResArr[j]["capital"]}`;
+            img.src = resObj['successArr'][j]['flagSrc'];
+            // img.onload = () => div.appendChild(img);
+            p.innerHTML = `#${j + 1} <br> [${resObj['successArr'][j]['iso2Name']}] ${resObj['successArr'][j]['countryName']}<br> capital: ${resObj['successArr'][j]["capital"]}`;
             div.className = "mini-result";
             div.tabIndex = 0;
 
             div.addEventListener("keydown", e => {
               if (e.key == "Enter") {
-                div.dispatchEvent(new Event("click"));
+                div.click();;
               }
             });
 
             div.addEventListener("click", async e => {
-              console.log(`click, j = ${j}`, successResArr);
-              search.value = successResArr[j]['counName'];
-              console.log(`То что в массиве: ${successResArr.length}, Длинна массива: ${successResArr.length}`)
-              console.log(`${successResArr[j]['counName']}`);
+              console.log(`click, j = ${j}`, resObj['successArr']);
+              search.value = resObj['successArr'][j]['countryName'];
+              console.log(`То что в массиве: ${resObj['successArr'].length}, Длинна массива: ${resObj['successArr'].length}`)
+              console.log(`${resObj['successArr'][j]['countryName']}`);
               search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
               if (divFound) divFound.remove();
-              showInfo(search.value);
+              showSingleInfo(search.value);
             });
           }
         });
       }
+      let firstPage = document.querySelector(".pagination > button");
+      if (firstPage) firstPage.click();
       if (divFound) divFound.remove();
       search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
 
       let pFound = document.querySelector('.results-component > p');
-      if (successResArr.length == 0) {
+      if (resObj['successArr'].length == 0) {
         pFound.innerHTML = "no countries for your request";
       } else {
         pFound.innerHTML = "";
       }
 
       let h3 = document.createElement("h3");
-      h3.innerHTML = `<strong>Found ${successResArr.length} countries:</strong>`;
+      h3.innerHTML = `<strong>Found ${resObj['successArr'].length} countries:</strong>`;
       resultsComp.insertBefore(h3, resultsComp.firstElementChild);
     }
 
     // --------------------------------------------
     //          SHOW SINGLE RESULT
     // --------------------------------------------
-    
-    async function showInfo(countryName) {
-      let ownSearch = foundCountries.filter(i => i.name.toLowerCase().includes(countryName.toLowerCase()));
-      ownSearch = ownSearch[0];
 
-      console.log("TCL: showInfo -> ownSearch['name']:", ownSearch['name'])
-      console.log(`https://api.worldbank.org/v2/country/${ownSearch["alpha-2"]}?format=json`);
+    async function showSingleInfo(countryName) {
+      let resObjFilter = resObj['successArr'].filter(i => i['countryName'].toLowerCase().includes(countryName.toLowerCase()));
+      console.log("TCL: showSingleInfo -> resObjFilter", resObjFilter)
 
-      let singleCap = await getSingleCountry(ownSearch["alpha-2"])
+      resObjFilter = resObjFilter[0];
+
+      console.log("TCL: showSingleInfo -> resObjFilter['name']:", resObjFilter['countryName'])
+      console.log(`https://api.worldbank.org/v2/country/${resObjFilter["iso2Name"]}?format=json`);
+
+      let singleCountry = await getSingleCountry(resObjFilter["iso2Name"])
 
       let div = document.createElement("div");
       let h1 = document.createElement("h1");
@@ -336,11 +305,11 @@
       let img = document.createElement("img");
       let iframe = document.createElement("iframe");
       let divInfo = document.createElement("div");
-      
-      h1.innerHTML = `${ownSearch["name"]}`;
-      img.src = `https://www.countryflags.io/${ownSearch["alpha-2"]}/shiny/64.png`;
-      p.innerHTML = `INFO <br> [${ownSearch["alpha-2"]}] <br> Capital city: ${singleCap[1][0]["capitalCity"]}`;
-      iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyB-AB34OTQFNDISPRKrYRGmU7SQ5utBEaw&q=${singleCap[1][0]["capitalCity"]} ${singleCap[1][0]["name"]}`;
+
+      h1.innerHTML = `${resObjFilter["countryName"]}`;
+      img.src = `https://www.countryflags.io/${resObjFilter["iso2Name"]}/shiny/64.png`;
+      p.innerHTML = `INFO <br> [${resObjFilter["iso2Name"]}] <br> Capital city: ${singleCountry[1][0]["capitalCity"]}`;
+      iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyB-AB34OTQFNDISPRKrYRGmU7SQ5utBEaw&q=${singleCountry[1][0]["capitalCity"]} ${singleCountry[1][0]["name"]}`;
       iframe.setAttribute("allow", "fullscreen");
       div.className = "mini-result-single";
       divInfo.appendChild(p);
@@ -358,9 +327,9 @@
 
   // funnction helper to show results
   async function getSingleCountry(country) {
-    const singleCapJson = await fetch(`https://api.worldbank.org/v2/country/${country}?format=json`);
-    const singleCap = await singleCapJson.json();
-    return singleCap;
+    const singleCountryJson = await fetch(`https://api.worldbank.org/v2/country/${country}?format=json`);
+    const singleCountry = await singleCountryJson.json();
+    return singleCountry;
   }
   inputBtn.onclick = miniResults;
 
@@ -368,16 +337,57 @@
   // --------------------------------------------
   //  RETURN ARR OF [NAME <-> ALPHACODE] COUNTRY ASSOCIATION 
   // --------------------------------------------
-  async function getCountry(elt1) {
+  async function getCountry() {
     const countriesJson = await fetch("country.json");
     const countries = await countriesJson.json();
 
     const foundCountries = countries.filter(i => i.name.toLowerCase().includes(search.value.toLowerCase())); //await ???
-    let p = document.createElement('p');
-    p.innerHTML = "Searching, wait a bit"
-    elt1.appendChild(p);
 
-    return foundCountries;
+    let doSmthAllJson = await Promise.all(foundCountries.map(i => fetch(`https://api.worldbank.org/v2/country/${i["alpha-2"]}?format=json`, { signal: controller.signal })));
+    let doSmthAll = await Promise.all(doSmthAllJson.map(i => i.json()));
+
+    // --------------------------------------------
+    //   CREATING SUCCESSED AND FAILED ARRAYS
+    // --------------------------------------------
+
+    let successArr = [];
+    let failArr = [];
+
+    for (let i = 0; i < foundCountries.length; i++) {
+      let countryName = foundCountries[i]["name"];
+      let iso2Name = foundCountries[i]["alpha-2"];
+      let flagSrc = `https://www.countryflags.io/${iso2Name}/shiny/64.png`;
+      try {
+        let capital = await doSmthAll[i][1][0]["capitalCity"];
+        let iso3Name = await doSmthAll[i][1][0]["id"];
+
+        successArr.push({
+          "countryName": countryName,
+          'capital': capital,
+          'iso2Name': iso2Name,
+          'iso3Name': iso3Name,
+          'flagSrc': flagSrc,
+        });
+
+      } catch (err) {
+        console.error(`getCountry(): [ ${i}. ${countryName} ${iso2Name} ]:\n`, err);
+        failArr.push({
+          'countryName': countryName,
+          'iso2Name': iso2Name
+        })
+      }
+    }
+    let resObj = {
+      "successArr": [...successArr],
+      "failArr": [...failArr]
+    }
+
+    // let p = document.createElement('p');
+    // p.innerHTML = "Searching, wait a bit";
+    // elt1.appendChild(p);
+
+    console.log("getCountry() return: resObj=", resObj);
+    return resObj;
   }
 
 
