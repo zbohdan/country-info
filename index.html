@@ -1,397 +1,469 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/country-info/assets/css/reset.css" type="text/css">
-    <link rel="stylesheet" href="/country-info/assets/css/main.css" type="text/css">
-    <link rel="stylesheet" href="/country-info/assets/css/media-queries.css" type="text/css">
-</head>
-<body>
-  <div class="container">
-    <section class="search-component">
-      <h1>Country info</h1>
-      <label>
-        <input name="searchCountry" placeholder="type country name" id="" autocomplete="off" tabindex="2">
-        <input type="button" name="showBtn" value="show">
-      </label>
-    </section>
-    <section class="results-component"></section>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/country-info/assets/css/reset.css" type="text/css" />
+    <link rel="stylesheet" href="/country-info/assets/css/main.css" type="text/css" />
+    <link rel="stylesheet" href="/country-info/assets/css/media-queries.css" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <section class="search-component">
+        <h1>Country info</h1>
+        <label>
+          <input name="searchCountry" placeholder="type country name" id="" autocomplete="off" tabindex="2" />
+          <input type="button" name="showBtn" value="show" />
+        </label>
+      </section>
+      <section class="results-component"></section>
+    </div>
+  </body>
+  <script>
+    let countryAPI = `http://api.worldbank.org/v2/country/br?format=json`;
+    let search = document.querySelector("input[name='searchCountry']");
+    let inputBtn = document.querySelector("input[name='showBtn']");
+    let controller = new AbortController();
 
-  </div>
+    let label = document.querySelector('.search-component > label');
+    label.addEventListener('click', e => e.preventDefault());
 
-</body>
-<script>
-  let countryAPI = `http://api.worldbank.org/v2/country/br?format=json`;
-  let search = document.querySelector("input[name='searchCountry']");
-  let inputBtn = document.querySelector("input[name='showBtn']")
-  let controller = new AbortController();
-
-
-  let label = document.querySelector('.search-component > label')
-  label.addEventListener("click", (e) => e.preventDefault());
-
-
-  search.focus();
-  search.addEventListener("keydown", e => {
-    if (e.key == "Enter") {
-      inputBtn.click();;
-    }
-  })
-
-  // --------------------------------------------
-  //            INPUT LISTENER
-  // --------------------------------------------
-
-  search.addEventListener("input", async e => {
-    // console.clear();
-    controller.abort();
-    controller = new AbortController();
-
-    if (search.value == "") {
-      let divFound = document.querySelector(".search-component > label > div");
-      if (divFound) divFound.remove();
-      search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
-      return;
-    }
-
-    let divFound = document.querySelector(".search-component > label > div");
-    if (divFound) divFound.remove();
-    let number = 0;
-    let div = document.createElement('div');
-    let ul = document.createElement('ul');
-    div.style.width = "90%";
-    div.style.backgroundColor = "white";
-    div.style.display = "block";
-    div.appendChild(ul);
-    let p = document.createElement('p');
-    p.innerHTML = "Searching...";
-    div.appendChild(p);
-    search.parentElement.insertBefore(div, inputBtn);
-    search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "0";
-
-    let resObj = await getCountry();
-
-    // --------------------------------------------
-    //    PRELIMINARY CHECK OF COUNTRY EXISTENCE
-    // --------------------------------------------
-
-    if (resObj['successArr'].length == 0) {
-      let divFound = document.querySelector(".search-component > label > div");
-      if (!divFound) search.parentElement.insertBefore(div, inputBtn);
-
-      let pFound = document.querySelector(".search-component > label > div > p");
-      if (pFound) {
-        pFound.innerHTML = "nothing found";
-      } else {
-        let p = document.createElement('p');
-        p.innerHTML = "nothing found";
-        div.appendChild(p);
+    search.focus();
+    search.addEventListener('keydown', e => {
+      if (e.key == 'Enter') {
+        inputBtn.click();
       }
-    } 
+    });
 
     // --------------------------------------------
-    //           CREATING OFFER LIST
+    //            INPUT LISTENER
     // --------------------------------------------
 
-    for (let i = 0; i < resObj['successArr'].length; i++) {
-      try {
-        if (number < 10) {
-          number++;
-          if (number == 1) {
-            ul.innerHTML = "";
-          }
+    search.addEventListener('input', async e => {
+      // console.clear();
+      controller.abort();
+      controller = new AbortController();
 
-          let li = document.createElement('li');
-          li.innerHTML = `${number}. [${resObj['successArr'][i]["iso2Name"]}] ${resObj['successArr'][i]["countryName"]}, capital: ${resObj['successArr'][i]["capital"]}`;
-          li.tabIndex = 0;
-
-          li.addEventListener("keydown", e => {
-            if (e.key == "Enter") {
-              li.click();;
-            }
-          });
-
-          li.addEventListener("click", e => {
-            search.value = `${resObj['successArr'][i]["countryName"]}`;
-            search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
-            let divFound = document.querySelector(".search-component > label > div");
-            divFound.remove();
-            inputBtn.dispatchEvent(new Event('click'));
-          });
-          ul.appendChild(li);
-          let pFound = document.querySelector(".search-component > label > div > p");
-          if (pFound) pFound.remove();
-        } else if (number == 10) {
-          number++;
-          let p = document.createElement('p');
-          p.innerHTML = "...";
-          div.appendChild(p);
-        }
-
-      } catch (err) {
-        if (err instanceof TypeError) {
-          console.error(`TYPE_ERROR_MY ${number}. [${resObj['successArr'][i]["iso2Name"]}] ${resObj['successArr'][i]["iso2Name"]}\n`, err);
-          number--;
-        } else {
-          console.error("UKNOWN_ERROR_MY\n", err);
-        }
-      }
-    }
-
-  });
-
-  // --------------------------------------------
-  //      SHOW BUTTON ONCLICK LISTENER
-  // --------------------------------------------
-
-  async function miniResults(e) {
-    // let resObj['successArr'] = [];
-    // let failArr = [];
-    let divMiniResults = document.createElement('div');
-    let divFound = document.querySelector(".search-component > label > div");
-
-    let resultsComp = document.querySelector(".results-component");
-    resultsComp.innerHTML = "";
-    let p = document.createElement('p');
-    p.innerHTML = "Searching...";
-    resultsComp.appendChild(p)
-
-    let resObj = await getCountry();
-
-    // --------------------------------------------
-    //  CREATING RESULT(S) AT NEW BLOCK
-    // --------------------------------------------
-
-    // single result
-    if (resObj['successArr'].length == 1) {
-      for (i = 0; i < resObj['successArr'].length; i++) {
-        // if (resObj['failArr'].indexOf(i) + 1) continue;
+      if (search.value == '') {
+        let divFound = document.querySelector('.search-component > label > div');
         if (divFound) divFound.remove();
-        search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
-        showSingleInfo(resObj['successArr'][i]["countryName"]);
+        search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = '20px';
+        return;
       }
-    } else {
-      //many results
-      let num = 0
-      for (let i = 0; i < Math.min(5, resObj['successArr'].length); i++) {
-        try {
-          num++;
-          let div = document.createElement("div");
-          let p = document.createElement("p");
-          let img = document.createElement("img");
+
+      let divFound = document.querySelector('.search-component > label > div');
+      if (divFound) divFound.remove();
+      let number = 0;
+      let div = document.createElement('div');
+      let ul = document.createElement('ul');
+      div.classList.add('search-offer');
+      // div.style.width = "90%";
+      // div.style.backgroundColor = "white";
+      // div.style.display = "block";
+      div.appendChild(ul);
+      let p = document.createElement('p');
+      p.innerHTML = 'Searching...';
+      div.appendChild(p);
+      search.parentElement.insertBefore(div, inputBtn);
+      search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = '0';
+
+      let resObj = await getCountry();
+
+      // --------------------------------------------
+      //    PRELIMINARY CHECK OF COUNTRY EXISTENCE
+      // --------------------------------------------
+
+      if (resObj['successArr'].length == 0) {
+        let divFound = document.querySelector('.search-component > label > div');
+        if (!divFound) search.parentElement.insertBefore(div, inputBtn);
+
+        let pFound = document.querySelector('.search-component > label > div > p');
+        if (pFound) {
+          pFound.innerHTML = 'nothing found';
+        } else {
+          let p = document.createElement('p');
+          p.innerHTML = 'nothing found';
           div.appendChild(p);
-          div.appendChild(img);
-          divMiniResults.appendChild(div);
-          resultsComp.appendChild(divMiniResults);
-
-          img.src = resObj['successArr'][i]['flagSrc'];
-          // img.onload = () => div.appendChild(img);
-          p.innerHTML = `#${i + 1} <br> [${resObj['successArr'][i]['iso2Name']}] ${resObj['successArr'][i]['countryName']}<br> capital: ${resObj['successArr'][i]["capital"]}`;
-          div.className = "mini-result";
-          divMiniResults.className = 'mini-results';
-          div.tabIndex = 0;
-
-          div.addEventListener("keydown", e => {
-            if (e.key == "Enter") {
-              div.click();;
-            }
-          });
-
-          div.addEventListener("click", async e => {
-            console.log(`click, i = ${i}`);
-            search.value = resObj['successArr'][i]['countryName'];
-            search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
-            if (divFound) divFound.remove();
-            showSingleInfo(search.value);
-          });
-        } catch (err) {
-          if (err instanceof TypeError) {
-            console.error(`~~~~~~~~~~~~~~~~~TYPE_ERROR_IN_FUNC_MY ${num}. `, err);
-            num--;
-          } else {
-            console.error("~~~~~~~~~~~~~~~~~~UKNOWN_ERROR_MY\n", err);
-          }
         }
       }
 
-      // pagination
-      let pagContainer = document.createElement("div");
-      pagContainer.className = "pagination";
-      let currentPage = 0;
+      // --------------------------------------------
+      //           CREATING OFFER LIST
+      // --------------------------------------------
 
-      for (let i = 0; i < Math.ceil(resObj['successArr'].length / 5); i++) {
-        if (resObj['successArr'].length <= 5) break;
+      for (let i = 0; i < resObj['successArr'].length; i++) {
+        try {
+          if (number < 10) {
+            number++;
+            if (number == 1) {
+              ul.innerHTML = '';
+            }
 
-        let paginNumber = document.createElement('button');
-        paginNumber.innerHTML = `${i + 1}`;
-        pagContainer.appendChild(paginNumber);
-        resultsComp.appendChild(pagContainer);
+            let li = document.createElement('li');
+            li.innerHTML = `${number}. [${resObj['successArr'][i]['iso2Name']}] ${
+              resObj['successArr'][i]['countryName']
+            }, capital: ${resObj['successArr'][i]['capital']}`;
+            li.tabIndex = 0;
 
-        paginNumber.addEventListener("click", e => {
-          let divMiniResults = document.querySelector('.mini-results');
-          divMiniResults.innerHTML = "";
-          if (i != currentPage) document.querySelectorAll(".pagination > button")[currentPage].classList.toggle("current");
-          currentPage = i;
-          if (!paginNumber.classList.contains("current")) paginNumber.classList.add("current");
-
-          for (let j = i * 5; j < Math.min(i * 5 + 5, resObj['successArr'].length); j++) {
-            let div = document.createElement("div");
-            let p = document.createElement("p");
-            let img = document.createElement("img");
-            div.appendChild(p);
-            div.appendChild(img);
-            divMiniResults.appendChild(div)
-
-            img.src = resObj['successArr'][j]['flagSrc'];
-            // img.onload = () => div.appendChild(img);
-            p.innerHTML = `#${j + 1} <br> [${resObj['successArr'][j]['iso2Name']}] ${resObj['successArr'][j]['countryName']}<br> capital: ${resObj['successArr'][j]["capital"]}`;
-            div.className = "mini-result";
-            div.tabIndex = 0;
-
-            div.addEventListener("keydown", e => {
-              if (e.key == "Enter") {
-                div.click();;
+            li.addEventListener('keydown', e => {
+              if (e.key == 'Enter') {
+                li.click();
               }
             });
 
-            div.addEventListener("click", async e => {
-              console.log(`click, j = ${j}`, resObj['successArr']);
-              search.value = resObj['successArr'][j]['countryName'];
-              console.log(`То что в массиве: ${resObj['successArr'].length}, Длинна массива: ${resObj['successArr'].length}`)
-              console.log(`${resObj['successArr'][j]['countryName']}`);
-              search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
+            li.addEventListener('click', e => {
+              search.value = `${resObj['successArr'][i]['countryName']}`;
+              search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = '20px';
+              let divFound = document.querySelector('.search-component > label > div');
+              divFound.remove();
+              inputBtn.dispatchEvent(new Event('click'));
+            });
+            ul.appendChild(li);
+            let pFound = document.querySelector('.search-component > label > div > p');
+            if (pFound) pFound.remove();
+          } else if (number == 10) {
+            number++;
+            let p = document.createElement('p');
+            p.innerHTML = '...';
+            div.appendChild(p);
+          }
+        } catch (err) {
+          if (err instanceof TypeError) {
+            console.error(
+              `TYPE_ERROR_MY ${number}. [${resObj['successArr'][i]['iso2Name']}]
+              ${resObj['successArr'][i]['iso2Name']}\n`,
+              err
+            );
+            number--;
+          } else {
+            console.error('UKNOWN_ERROR_MY\n', err);
+          }
+        }
+      }
+    });
+
+    // --------------------------------------------
+    //      SHOW BUTTON ONCLICK LISTENER
+    // --------------------------------------------
+
+    async function miniResults(e) {
+      // let resObj['successArr'] = [];
+      // let failArr = [];
+      let divMiniResults = document.createElement('div');
+      let divFound = document.querySelector('.search-component > label > div');
+
+      let resultsComp = document.querySelector('.results-component');
+      resultsComp.innerHTML = '';
+      let p = document.createElement('p');
+      p.innerHTML = 'Searching...';
+      resultsComp.appendChild(p);
+
+      let resObj = await getCountry();
+
+      // --------------------------------------------
+      //  CREATING RESULT(S) AT NEW BLOCK
+      // --------------------------------------------
+
+      // single result
+      if (resObj['successArr'].length == 1) {
+        for (i = 0; i < resObj['successArr'].length; i++) {
+          // if (resObj['failArr'].indexOf(i) + 1) continue;
+          if (divFound) divFound.remove();
+          search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = '20px';
+          showSingleInfo(resObj['successArr'][i]['countryName']);
+        }
+      } else {
+        //many results
+        let num = 0;
+        for (let i = 0; i < Math.min(5, resObj['successArr'].length); i++) {
+          try {
+            num++;
+            let div = document.createElement('div');
+            let p = document.createElement('p');
+            let img = document.createElement('img');
+            div.appendChild(p);
+            div.appendChild(img);
+            divMiniResults.appendChild(div);
+            resultsComp.appendChild(divMiniResults);
+
+            img.src = resObj['successArr'][i]['flagSrc'];
+            // img.onload = () => div.appendChild(img);
+            p.innerHTML = `#${i + 1} <br> [${resObj['successArr'][i]['iso2Name']}] ${
+              resObj['successArr'][i]['countryName']
+            }<br> capital: ${resObj['successArr'][i]['capital']}`;
+            div.className = 'mini-result';
+            divMiniResults.className = 'mini-results';
+            div.tabIndex = 0;
+
+            div.addEventListener('keydown', e => {
+              if (e.key == 'Enter') {
+                div.click();
+              }
+            });
+
+            div.addEventListener('click', async e => {
+              console.log(`click, i = ${i}`);
+              search.value = resObj['successArr'][i]['countryName'];
+              search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = '20px';
               if (divFound) divFound.remove();
               showSingleInfo(search.value);
             });
+          } catch (err) {
+            if (err instanceof TypeError) {
+              console.error(`~~~~~~~~~~~~~~~~~TYPE_ERROR_IN_FUNC_MY ${num}. `, err);
+              num--;
+            } else {
+              console.error('~~~~~~~~~~~~~~~~~~UKNOWN_ERROR_MY\n', err);
+            }
           }
-        });
-      }
-      let firstPage = document.querySelector(".pagination > button");
-      if (firstPage) firstPage.click();
-      if (divFound) divFound.remove();
-      search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = "20px";
+        }
 
-      let pFound = document.querySelector('.results-component > p');
-      if (resObj['successArr'].length == 0) {
-        pFound.innerHTML = "no countries for your request";
+        // pagination
+        let pagContainer = document.createElement('div');
+        pagContainer.className = 'pagination';
+        let currentPage = 0;
+
+        for (let i = 0; i < Math.ceil(resObj['successArr'].length / 5); i++) {
+          if (resObj['successArr'].length <= 5) break;
+
+          let paginNumber = document.createElement('button');
+          paginNumber.innerHTML = `${i + 1}`;
+          pagContainer.appendChild(paginNumber);
+          resultsComp.appendChild(pagContainer);
+
+          paginNumber.addEventListener('click', e => {
+            let divMiniResults = document.querySelector('.mini-results');
+            divMiniResults.innerHTML = '';
+            if (i != currentPage)
+              document.querySelectorAll('.pagination > button')[currentPage].classList.toggle('current');
+            currentPage = i;
+            if (!paginNumber.classList.contains('current')) paginNumber.classList.add('current');
+
+            for (let j = i * 5; j < Math.min(i * 5 + 5, resObj['successArr'].length); j++) {
+              let div = document.createElement('div');
+              let p = document.createElement('p');
+              let img = document.createElement('img');
+              div.appendChild(p);
+              div.appendChild(img);
+              divMiniResults.appendChild(div);
+
+              img.src = resObj['successArr'][j]['flagSrc'];
+              // img.onload = () => div.appendChild(img);
+              p.innerHTML = `#${j + 1} <br> [${resObj['successArr'][j]['iso2Name']}] ${
+                resObj['successArr'][j]['countryName']
+              }<br> capital: ${resObj['successArr'][j]['capital']}`;
+              div.className = 'mini-result';
+              div.tabIndex = 0;
+
+              div.addEventListener('keydown', e => {
+                if (e.key == 'Enter') {
+                  div.click();
+                }
+              });
+
+              div.addEventListener('click', async e => {
+                console.log(`click, j = ${j}`, resObj['successArr']);
+                search.value = resObj['successArr'][j]['countryName'];
+                console.log(
+                  `То что в массиве: ${resObj['successArr'].length}, Длинна массива: ${resObj['successArr'].length}`
+                );
+                console.log(`${resObj['successArr'][j]['countryName']}`);
+                search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = '20px';
+                if (divFound) divFound.remove();
+                showSingleInfo(search.value);
+              });
+            }
+          });
+        }
+        let firstPage = document.querySelector('.pagination > button');
+        if (firstPage) firstPage.click();
+        if (divFound) divFound.remove();
+        search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = '20px';
+
+        let pFound = document.querySelector('.results-component > p');
+        if (resObj['successArr'].length == 0) {
+          pFound.innerHTML = 'no countries for your request';
+        } else {
+          pFound.innerHTML = '';
+        }
+
+        let h3 = document.createElement('h3');
+        h3.innerHTML = `<strong>Found ${resObj['successArr'].length} countries:</strong>`;
+        resultsComp.insertBefore(h3, resultsComp.firstElementChild);
+      }
+
+      // --------------------------------------------
+      //          SHOW SINGLE RESULT
+      // --------------------------------------------
+
+      async function showSingleInfo(countryName) {
+        let resObjFilter = resObj['successArr'].filter(i =>
+          i['countryName'].toLowerCase().includes(countryName.toLowerCase())
+        );
+        console.log('TCL: showSingleInfo -> resObjFilter', resObjFilter);
+
+        resObjFilter = resObjFilter[0];
+
+        console.log("TCL: showSingleInfo -> resObjFilter['name']:", resObjFilter['countryName']);
+        console.log(`https://api.worldbank.org/v2/country/${resObjFilter['iso2Name']}?format=json`);
+
+        let singleCountry = await getSingleCountry(resObjFilter['iso2Name']);
+
+        let div = document.createElement('div');
+        div.className = 'mini-result-single';
+
+        let h1 = document.createElement('h1');
+        h1.innerHTML = `${resObjFilter['countryName']}`;
+        div.appendChild(h1);
+
+        let divInfo = document.createElement('div');
+        let p = document.createElement('p');
+        let img = document.createElement('img');
+        p.innerHTML = `INFO <br> [${resObjFilter['iso2Name']}] <br> Capital city:
+        ${singleCountry[1][0]['capitalCity']}`;
+        img.src = `https://www.countryflags.io/${resObjFilter['iso2Name']}/shiny/64.png`;
+        divInfo.appendChild(p);
+        divInfo.appendChild(img);
+        div.appendChild(divInfo);
+
+        resultsComp.innerHTML = '';
+        resultsComp.appendChild(div);
+
+        await getPopulationChart(resObjFilter['iso3Name'], resObjFilter['countryName']);
+
+        let iframe = document.createElement('iframe');
+        iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyB-AB34OTQFNDISPRKrYRGmU7SQ5utBEaw&q=
+        ${singleCountry[1][0]['capitalCity']} ${singleCountry[1][0]['name']}`;
+        iframe.setAttribute('allow', 'fullscreen');
+        div.appendChild(iframe);
+
+        // const chart = await getPopulation(resObjFilter['iso3Name']);
+        // alert(`xs = ${chart.xs} ${chart.y}`);
+      }
+    }
+
+    // funnction helper to show results
+    async function getSingleCountry(country) {
+      const singleCountryJson = await fetch(`https://api.worldbank.org/v2/country/${country}?format=json`);
+      const singleCountry = await singleCountryJson.json();
+      return singleCountry;
+    }
+    //population data with chart
+    async function getPopulationChart(iso3Code, country) {
+      const response = await fetch('API_SP.POP.TOTL_DS2_en_csv_v2_162.csv');
+      const data = await response.text();
+      let years = [];
+      let peopleCount = [];
+
+      const table = data
+        .trim()
+        .split('\n')
+        .slice(4);
+      years = [...table[0].split(',').slice(4, -1)];
+      years = years.map(i => i.slice(1, -1));
+
+      table.forEach(row => {
+        const columns = row.split(',');
+        const ourCountry = columns[1].slice(1, -1);
+        if (ourCountry != iso3Code) return;
+        peopleCount = [...columns.slice(5, -1)];
+        peopleCount = peopleCount.map(i => i.slice(1, -1));
+      });
+
+      let canvas = document.createElement('canvas');
+      canvas.id = 'chartPopulation';
+      if (window.innerWidth < 650) {
+        canvas.setAttribute('width', '2');
       } else {
-        pFound.innerHTML = "";
+        canvas.setAttribute('width', '3');
       }
+      canvas.setAttribute('height', '1');
+      let div = document.querySelector('.mini-result-single');
+      div.appendChild(canvas);
 
-      let h3 = document.createElement("h3");
-      h3.innerHTML = `<strong>Found ${resObj['successArr'].length} countries:</strong>`;
-      resultsComp.insertBefore(h3, resultsComp.firstElementChild);
+      getChart(years, peopleCount, country);
+    }
+    //chart building
+    function getChart(xs, ys, country) {
+      let ctx = document.getElementById('chartPopulation').getContext('2d');
+      let myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: xs,
+          datasets: [
+            {
+              fill: false,
+              label: `Population chart of ${country}`,
+              data: ys,
+              backgroundColor: 'rgba(255, 99, 132, 0.2)',
+              borderColor: 'rgba(255, 99, 132, 1)',
+              borderWidth: 1
+            }
+          ]
+        }
+      });
     }
 
-    // --------------------------------------------
-    //          SHOW SINGLE RESULT
-    // --------------------------------------------
-
-    async function showSingleInfo(countryName) {
-      let resObjFilter = resObj['successArr'].filter(i => i['countryName'].toLowerCase().includes(countryName.toLowerCase()));
-      console.log("TCL: showSingleInfo -> resObjFilter", resObjFilter)
-
-      resObjFilter = resObjFilter[0];
-
-      console.log("TCL: showSingleInfo -> resObjFilter['name']:", resObjFilter['countryName'])
-      console.log(`https://api.worldbank.org/v2/country/${resObjFilter["iso2Name"]}?format=json`);
-
-      let singleCountry = await getSingleCountry(resObjFilter["iso2Name"])
-
-      let div = document.createElement("div");
-      let h1 = document.createElement("h1");
-      let p = document.createElement("p");
-      let img = document.createElement("img");
-      let iframe = document.createElement("iframe");
-      let divInfo = document.createElement("div");
-
-      h1.innerHTML = `${resObjFilter["countryName"]}`;
-      img.src = `https://www.countryflags.io/${resObjFilter["iso2Name"]}/shiny/64.png`;
-      p.innerHTML = `INFO <br> [${resObjFilter["iso2Name"]}] <br> Capital city: ${singleCountry[1][0]["capitalCity"]}`;
-      iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyB-AB34OTQFNDISPRKrYRGmU7SQ5utBEaw&q=${singleCountry[1][0]["capitalCity"]} ${singleCountry[1][0]["name"]}`;
-      iframe.setAttribute("allow", "fullscreen");
-      div.className = "mini-result-single";
-      divInfo.appendChild(p);
-      divInfo.appendChild(img);
-      div.appendChild(h1);
-      // div.appendChild(p);
-      // div.appendChild(img);
-      div.appendChild(divInfo);
-      div.appendChild(iframe);
-      resultsComp.innerHTML = "";
-      resultsComp.appendChild(div);
-      // return `HELLO ${countryName}`;
-    }
-  }
-
-  // funnction helper to show results
-  async function getSingleCountry(country) {
-    const singleCountryJson = await fetch(`https://api.worldbank.org/v2/country/${country}?format=json`);
-    const singleCountry = await singleCountryJson.json();
-    return singleCountry;
-  }
-  inputBtn.onclick = miniResults;
-
-
-  // --------------------------------------------
-  //  RETURN ARR OF [NAME <-> ALPHACODE] COUNTRY ASSOCIATION 
-  // --------------------------------------------
-  async function getCountry() {
-    const countriesJson = await fetch("country.json");
-    const countries = await countriesJson.json();
-
-    const foundCountries = countries.filter(i => i.name.toLowerCase().includes(search.value.toLowerCase())); //await ???
-
-    let doSmthAllJson = await Promise.all(foundCountries.map(i => fetch(`https://api.worldbank.org/v2/country/${i["alpha-2"]}?format=json`, { signal: controller.signal })));
-    let doSmthAll = await Promise.all(doSmthAllJson.map(i => i.json()));
+    inputBtn.onclick = miniResults;
 
     // --------------------------------------------
-    //   CREATING SUCCESSED AND FAILED ARRAYS
+    //  RETURN OBJ OF SUCCESS/FAIL RESULTS
     // --------------------------------------------
+    async function getCountry() {
+      const countriesJson = await fetch('country.json');
+      const countries = await countriesJson.json();
 
-    let successArr = [];
-    let failArr = [];
+      const foundCountries = countries.filter(i => i.name.toLowerCase().includes(search.value.toLowerCase())); //await ???
 
-    for (let i = 0; i < foundCountries.length; i++) {
-      let countryName = foundCountries[i]["name"];
-      let iso2Name = foundCountries[i]["alpha-2"];
-      let flagSrc = `https://www.countryflags.io/${iso2Name}/shiny/64.png`;
-      try {
-        let capital = await doSmthAll[i][1][0]["capitalCity"];
-        let iso3Name = await doSmthAll[i][1][0]["id"];
+      let doSmthAllJson = await Promise.all(
+        foundCountries.map(i =>
+          fetch(`https://api.worldbank.org/v2/country/${i['alpha-2']}?format=json`, { signal: controller.signal })
+        )
+      );
+      let doSmthAll = await Promise.all(doSmthAllJson.map(i => i.json()));
 
-        successArr.push({
-          "countryName": countryName,
-          'capital': capital,
-          'iso2Name': iso2Name,
-          'iso3Name': iso3Name,
-          'flagSrc': flagSrc,
-        });
+      // --------------------------------------------
+      //   CREATING SUCCESSED AND FAILED ARRAYS
+      // --------------------------------------------
 
-      } catch (err) {
-        console.error(`getCountry(): [ ${i}. ${countryName} ${iso2Name} ]:\n`, err);
-        failArr.push({
-          'countryName': countryName,
-          'iso2Name': iso2Name
-        })
+      let successArr = [];
+      let failArr = [];
+
+      for (let i = 0; i < foundCountries.length; i++) {
+        let countryName = foundCountries[i]['name'];
+        let iso2Name = foundCountries[i]['alpha-2'];
+        let flagSrc = `https://www.countryflags.io/${iso2Name}/shiny/64.png`;
+        try {
+          let capital = await doSmthAll[i][1][0]['capitalCity'];
+          let iso3Name = await doSmthAll[i][1][0]['id'];
+
+          successArr.push({
+            countryName: countryName,
+            capital: capital,
+            iso2Name: iso2Name,
+            iso3Name: iso3Name,
+            flagSrc: flagSrc
+          });
+        } catch (err) {
+          console.error(`getCountry(): [ ${i}. ${countryName} ${iso2Name} ]:\n`, err);
+          failArr.push({
+            countryName: countryName,
+            iso2Name: iso2Name
+          });
+        }
       }
+      let resObj = {
+        successArr: [...successArr],
+        failArr: [...failArr]
+      };
+
+      // let p = document.createElement('p');
+      // p.innerHTML = "Searching, wait a bit";
+      // elt1.appendChild(p);
+
+      console.log('getCountry() return: resObj=', resObj);
+      return resObj;
     }
-    let resObj = {
-      "successArr": [...successArr],
-      "failArr": [...failArr]
-    }
-
-    // let p = document.createElement('p');
-    // p.innerHTML = "Searching, wait a bit";
-    // elt1.appendChild(p);
-
-    console.log("getCountry() return: resObj=", resObj);
-    return resObj;
-  }
-
-
-
-
-</script>
+  </script>
 </html>

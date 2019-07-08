@@ -4,6 +4,8 @@
   margin: auto;
 }
 .search-component {
+  display: flex;
+  flex-direction: column;
   width: 90%;
   margin: 10px auto 10px auto;
   box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
@@ -14,11 +16,13 @@
 .search-component > label {
   position: relative;
   display: flex;
+  align-self: center;
   /* flex-wrap: wrap;
   justify-content: center; */
   flex-direction: column;
   align-items: center;
   padding-bottom: 20px;
+  width: 90%;
 }
 .search-component > label li,
 .search-component > label p {
@@ -36,10 +40,10 @@ h1 {
   padding: 20px;
   text-shadow: 1px 1px 0.29px black;
 }
-input[name="searchCountry"] {
+input[name='searchCountry'] {
   /* display: inline; */
   height: 40px;
-  width: 90%;
+  width: 100%;
   border: 1px solid #ccc;
   box-shadow: 1px 0.5px 2px rgba(0, 0, 0, 0.3);
   /* background-color: #caeff2c9; */
@@ -51,7 +55,7 @@ input[name="searchCountry"] {
   -ms-user-select: none;
   user-select: none; */
 }
-input[name="showBtn"] {
+input[name='showBtn'] {
   margin-top: 15px;
   height: 20px;
   border-radius: 10px;
@@ -62,8 +66,17 @@ input[name="showBtn"] {
   border: none;
   cursor: pointer;
 }
-input[name="showBtn"]:focus,
-input[name="showBtn"]:hover {
+.search-offer {
+  width: 100%;
+  background-color: white;
+  box-shadow: 1px 0.5px 2px rgba(0, 0, 0, 0.3);
+  border: 1px solid #ccc;
+  border-top: 0;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+input[name='showBtn']:focus,
+input[name='showBtn']:hover {
   /* background-color: yellow;
   color: black; */
   /* color: #d869c8; */
@@ -153,7 +166,6 @@ input[name="showBtn"]:hover {
   flex-direction: column;
   width: 90%;
   margin: 10px auto 10px auto;
-  /* background-color: white; */
 }
 .mini-result-single > h1 {
   font-size: 50px;
@@ -168,6 +180,8 @@ input[name="showBtn"]:hover {
 .mini-result-single > div > p {
   text-shadow: 0.2px 0.2px 0.1px black;
   color: #c800b094;
+  border-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 .mini-result-single > div > img {
   margin-left: auto;
