@@ -21,7 +21,6 @@
     </div>
   </body>
   <script>
-    let countryAPI = `http://api.worldbank.org/v2/country/br?format=json`;
     let search = document.querySelector("input[name='searchCountry']");
     let inputBtn = document.querySelector("input[name='showBtn']");
     let controller = new AbortController();
@@ -301,12 +300,13 @@
         let resObjFilter = resObj['successArr'].filter(i =>
           i['countryName'].toLowerCase().includes(countryName.toLowerCase())
         );
-        console.log('TCL: showSingleInfo -> resObjFilter', resObjFilter);
+        // // console.log('TCL: showSingleInfo -> resObjFilter', resObjFilter);
 
         resObjFilter = resObjFilter[0];
+        // console.log('TCL: showSingleInfo -> resObjFilter', resObjFilter);
 
-        console.log("TCL: showSingleInfo -> resObjFilter['name']:", resObjFilter['countryName']);
-        console.log(`https://api.worldbank.org/v2/country/${resObjFilter['iso2Name']}?format=json`);
+        // console.log("TCL: showSingleInfo -> resObjFilter['name']:", resObjFilter['countryName']);
+        // console.log(`https://api.worldbank.org/v2/country/${resObjFilter['iso2Name']}?format=json`);
 
         let singleCountry = await getSingleCountry(resObjFilter['iso2Name']);
 
@@ -320,8 +320,29 @@
         let divInfo = document.createElement('div');
         let p = document.createElement('p');
         let img = document.createElement('img');
-        p.innerHTML = `INFO <br> [${resObjFilter['iso2Name']}] <br> Capital city:
-        ${singleCountry[1][0]['capitalCity']}`;
+        try {
+          const tempJson = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?q=${resObjFilter['capital']},${
+              resObjFilter['iso2Name']
+            }&units=metric&appid=e7703bc585eebdd345727899ab1b55fc`
+          );
+          const temp = await tempJson.json();
+          p.innerHTML = `INFO [${resObjFilter['iso2Name']}] <br>
+          Capital city: ${singleCountry[1][0]['capitalCity']} <br>
+          Current temperature: ${temp['main']['temp']} °C`;
+          // console.log(
+          //   `https://api.openweathermap.org/data/2.5/weather?q=${resObjFilter['capital']},${
+          //     resObjFilter['iso2Name']
+          //   }&units=metric&appid=e7703bc585eebdd345727899ab1b55fc`
+          // );
+        } catch (err) {
+          p.innerHTML = `INFO <br> [${resObjFilter['iso2Name']}] <br>
+          Capital city: ${singleCountry[1][0]['capitalCity']} <br>
+          Current temperature: undefined`;
+          console.log('temperature error:', err);
+        }
+        // p.innerHTML = `INFO [${resObjFilter['iso2Name']}] <br>
+        //   Capital city: ${singleCountry[1][0]['capitalCity']} <br>`;
         img.src = `https://www.countryflags.io/${resObjFilter['iso2Name']}/shiny/64.png`;
         divInfo.appendChild(p);
         divInfo.appendChild(img);
@@ -333,13 +354,12 @@
         await getPopulationChart(resObjFilter['iso3Name'], resObjFilter['countryName']);
 
         let iframe = document.createElement('iframe');
-        iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyB-AB34OTQFNDISPRKrYRGmU7SQ5utBEaw&q=
-        ${singleCountry[1][0]['capitalCity']} ${singleCountry[1][0]['name']}`;
+        iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyB-AB34OTQFNDISPRKrYRGmU7SQ5utBEaw&q=${
+          singleCountry[1][0]['capitalCity']
+        } ${singleCountry[1][0]['name']}`;
+        // console.log(`query = '${singleCountry[1][0]['capitalCity']} ${singleCountry[1][0]['name']}'`);
         iframe.setAttribute('allow', 'fullscreen');
         div.appendChild(iframe);
-
-        // const chart = await getPopulation(resObjFilter['iso3Name']);
-        // alert(`xs = ${chart.xs} ${chart.y}`);
       }
     }
 
@@ -362,13 +382,15 @@
         .slice(4);
       years = [...table[0].split(',').slice(4, -1)];
       years = years.map(i => i.slice(1, -1));
-
+      let i = 5;
       table.forEach(row => {
         const columns = row.split(',');
         const ourCountry = columns[1].slice(1, -1);
+        // console.log(`${i++}. ourCountry = ${ourCountry}, iso3Name = ${iso3Code}`);
         if (ourCountry != iso3Code) return;
         peopleCount = [...columns.slice(5, -1)];
         peopleCount = peopleCount.map(i => i.slice(1, -1));
+        // console.log('TCL: getPopulationChart -> peopleCount', peopleCount);
       });
 
       let canvas = document.createElement('canvas');
