@@ -40,7 +40,6 @@
     // --------------------------------------------
 
     search.addEventListener('input', async e => {
-      // console.clear();
       controller.abort();
       controller = new AbortController();
 
@@ -57,9 +56,6 @@
       let div = document.createElement('div');
       let ul = document.createElement('ul');
       div.classList.add('search-offer');
-      // div.style.width = "90%";
-      // div.style.backgroundColor = "white";
-      // div.style.display = "block";
       div.appendChild(ul);
       let p = document.createElement('p');
       p.innerHTML = 'Searching...';
@@ -167,7 +163,6 @@
       // single result
       if (resObj['successArr'].length == 1) {
         for (i = 0; i < resObj['successArr'].length; i++) {
-          // if (resObj['failArr'].indexOf(i) + 1) continue;
           if (divFound) divFound.remove();
           search.style.borderBottomRightRadius = search.style.borderBottomLeftRadius = '20px';
           showSingleInfo(resObj['successArr'][i]['countryName']);
@@ -187,7 +182,6 @@
             resultsComp.appendChild(divMiniResults);
 
             img.src = resObj['successArr'][i]['flagSrc'];
-            // img.onload = () => div.appendChild(img);
             p.innerHTML = `#${i + 1} <br> [${resObj['successArr'][i]['iso2Name']}] ${
               resObj['successArr'][i]['countryName']
             }<br> capital: ${resObj['successArr'][i]['capital']}`;
@@ -248,7 +242,6 @@
               divMiniResults.appendChild(div);
 
               img.src = resObj['successArr'][j]['flagSrc'];
-              // img.onload = () => div.appendChild(img);
               p.innerHTML = `#${j + 1} <br> [${resObj['successArr'][j]['iso2Name']}] ${
                 resObj['successArr'][j]['countryName']
               }<br> capital: ${resObj['successArr'][j]['capital']}`;
@@ -318,6 +311,7 @@
         div.appendChild(h1);
 
         let divInfo = document.createElement('div');
+        let divCapitalInfo = document.createElement('div');
         let p = document.createElement('p');
         let img = document.createElement('img');
         try {
@@ -336,15 +330,46 @@
           //   }&units=metric&appid=e7703bc585eebdd345727899ab1b55fc`
           // );
         } catch (err) {
-          p.innerHTML = `INFO <br> [${resObjFilter['iso2Name']}] <br>
+          p.innerHTML = `INFO [${resObjFilter['iso2Name']}] <br>
           Capital city: ${singleCountry[1][0]['capitalCity']} <br>
           Current temperature: undefined`;
           console.log('temperature error:', err);
         }
-        // p.innerHTML = `INFO [${resObjFilter['iso2Name']}] <br>
-        //   Capital city: ${singleCountry[1][0]['capitalCity']} <br>`;
+        divInfo.classList.add('div-info');
+        divCapitalInfo.appendChild(p);
+
+        const divCountryInfo = document.createElement('div');
+        const pCI = document.createElement('p');
+        const coInfoJson = await fetch(`https://restcountries.eu/rest/v2/alpha/${resObjFilter['iso2Name']}`);
+        const coInfo = await coInfoJson.json();
+
+        pCI.innerHTML = `Area:  ${localeString(coInfo['area'])} km<sup>2</sup><br>
+          Population: ${localeString(coInfo['population'])} <br>
+          Currency: ${coInfo['currencies'][0]['code']} (${coInfo['currencies'][0]['name']}, ${
+          coInfo['currencies'][0]['symbol']
+        })`;
+        divCountryInfo.classList.add('div-info');
+        divCountryInfo.appendChild(pCI);
+
+        function localeString(x) {
+          let sx = ('' + x).split('.');
+          let s = '',
+            i,
+            j;
+          i = sx[0].length;
+          while (i > 3) {
+            j = i - 3;
+            s = ' ' + sx[0].slice(j, i) + s;
+            i = j;
+          }
+          s = sx[0].slice(0, i) + s;
+          sx[0] = s;
+          return sx.join('.');
+        }
+
         img.src = `https://www.countryflags.io/${resObjFilter['iso2Name']}/shiny/64.png`;
-        divInfo.appendChild(p);
+        divInfo.appendChild(divCountryInfo);
+        divInfo.appendChild(divCapitalInfo);
         divInfo.appendChild(img);
         div.appendChild(divInfo);
 
@@ -353,13 +378,15 @@
 
         await getPopulationChart(resObjFilter['iso3Name'], resObjFilter['countryName']);
 
+        let iframeContainer = document.createElement('div');
+        iframeContainer.classList.add('iframe-container');
         let iframe = document.createElement('iframe');
         iframe.src = `https://www.google.com/maps/embed/v1/place?key=AIzaSyB-AB34OTQFNDISPRKrYRGmU7SQ5utBEaw&q=${
           singleCountry[1][0]['capitalCity']
         } ${singleCountry[1][0]['name']}`;
         // console.log(`query = '${singleCountry[1][0]['capitalCity']} ${singleCountry[1][0]['name']}'`);
-        iframe.setAttribute('allow', 'fullscreen');
-        div.appendChild(iframe);
+        iframeContainer.appendChild(iframe);
+        div.appendChild(iframeContainer);
       }
     }
 
@@ -393,16 +420,13 @@
         // console.log('TCL: getPopulationChart -> peopleCount', peopleCount);
       });
 
+      let chartContainer = document.createElement('div');
+      chartContainer.classList.add('chart-container');
       let canvas = document.createElement('canvas');
       canvas.id = 'chartPopulation';
-      if (window.innerWidth < 650) {
-        canvas.setAttribute('width', '2');
-      } else {
-        canvas.setAttribute('width', '3');
-      }
-      canvas.setAttribute('height', '1');
       let div = document.querySelector('.mini-result-single');
-      div.appendChild(canvas);
+      div.appendChild(chartContainer);
+      chartContainer.appendChild(canvas);
 
       getChart(years, peopleCount, country);
     }
@@ -416,13 +440,16 @@
           datasets: [
             {
               fill: false,
-              label: `Population chart of ${country}`,
+              label: `Population of ${country}`,
               data: ys,
               backgroundColor: 'rgba(255, 99, 132, 0.2)',
               borderColor: 'rgba(255, 99, 132, 1)',
               borderWidth: 1
             }
           ]
+        },
+        options: {
+          maintainAspectRatio: false
         }
       });
     }
@@ -479,12 +506,7 @@
         successArr: [...successArr],
         failArr: [...failArr]
       };
-
-      // let p = document.createElement('p');
-      // p.innerHTML = "Searching, wait a bit";
-      // elt1.appendChild(p);
-
-      console.log('getCountry() return: resObj=', resObj);
+      // console.log('getCountry() return: resObj=', resObj);
       return resObj;
     }
   </script>
